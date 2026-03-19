@@ -1,1 +1,0 @@
-# Rentabilida-Conecta-V1

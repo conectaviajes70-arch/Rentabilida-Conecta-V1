@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rentabilidad Conecta</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===== TU CSS BASE ===== */
+body {
+    background: linear-gradient(135deg, #000000, #0a0f1f);
+    font-family: 'Poppins', sans-serif;
+    color: #ffffff;
+    margin:0;
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+}
+
+.form-all {
+    background: rgba(10, 15, 30, 0.85);
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0, 153, 255, 0.25);
+    padding: 25px;
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    color: #00aaff;
+    text-shadow: 0 0 10px rgba(0,170,255,0.7);
+    text-align:center;
+}
+
+label {
+    font-size: 13px;
+    color: #ccc;
+}
+
+input {
+    width:100%;
+    margin:8px 0 15px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #1e2a4a;
+    background: rgba(0,0,0,0.6);
+    color:white;
+}
+
+input:focus{
+    border:1px solid #00aaff;
+    box-shadow:0 0 10px rgba(0,170,255,0.6);
+    outline:none;
+}
+
+button {
+    width:100%;
+    margin-top:10px;
+    padding:12px;
+    border:none;
+    border-radius:30px;
+    font-weight:bold;
+    background: linear-gradient(135deg, #00aaff, #0044ff);
+    color:white;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.result {
+    text-align:center;
+    margin-top:20px;
+}
+
+.big {
+    font-size:28px;
+    color:#00ccff;
+    text-shadow:0 0 15px rgba(0,170,255,0.8);
+}
+
+.section {
+    margin-top:25px;
+}
+
+.card {
+    background: rgba(0,0,0,0.5);
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="form-all">
+<h1>Rentabilidad Conecta</h1>
+
+<label>Ingreso diario ($)</label>
+<input id="ingreso" type="number">
+
+<label>Tiempo de conexión (hrs)</label>
+<input id="horas" type="number">
+
+<label>Kilómetros recorridos</label>
+<input id="km" type="number">
+
+<label>Combustible / Electricidad ($)</label>
+<input id="combustible" type="number">
+
+<label>Mantenimiento ($)</label> ($)</label>
+<input id="mant" type="number">
+
+<label>Renta/Financiamiento ($)</label>
+<input id="renta" type="number">
+
+<label>Seguro ($)</label>
+<input id="seguro" type="number">
+
+<label>Otros gastos ($)</label>
+<input id="otros" type="number">
+
+<button onclick="calcular()">Calcular</button>
+<button onclick="limpiar()">Limpiar</button>
+<button onclick="guardarDia()">Guardar Día</button>
+
+<div class="result">
+<p>Ganancia Bruta</p>
+<div id="bruta" class="big">$0</div>
+
+<p>Ganancia Neta</p>
+<div id="neta" class="big">$0</div>
+</div>
+</div>
+
+<div class="form-all section">
+<h1>Historial</h1>
+<div id="historial"></div>
+<button onclick="calcularSemana()">Calcular Semana</button>
+<button onclick="calcularMes()">Calcular Mes</button>
+<button onclick="borrarTodo()">Borrar Todo</button>
+</div>
+
+</div>
+
+<script>
+let dias = JSON.parse(localStorage.getItem('dias')) || [];
+
+function calcular(){
+  let ingreso = +document.getElementById('ingreso').value || 0;
+  let gastos = (+document.getElementById('combustible').value||0)+(+document.getElementById('mant').value||0)+(+document.getElementById('renta').value||0)+(+document.getElementById('seguro').value||0)+(+document.getElementById('otros').value||0);
+
+  let neta = ingreso - gastos;
+
+  document.getElementById('bruta').innerText = "$"+ingreso;
+  document.getElementById('neta').innerText = "$"+neta;
+}
+
+function limpiar(){
+  document.querySelectorAll('input').forEach(i=>i.value='');
+}
+
+function guardarDia(){
+  let ingreso = +document.getElementById('ingreso').value || 0;
+  let gastos = (+document.getElementById('combustible').value||0)+(+document.getElementById('mant').value||0)+(+document.getElementById('renta').value||0)+(+document.getElementById('seguro').value||0)+(+document.getElementById('otros').value||0);
+  let neta = ingreso - gastos;
+
+  let km = +document.getElementById('km').value || 0;
+  let combustible = +document.getElementById('combustible').value || 0;
+  let mant = +document.getElementById('mant').value || 0;
+  let renta = +document.getElementById('renta').value || 0;
+  let seguro = +document.getElementById('seguro').value || 0;
+  let otros = +document.getElementById('otros').value || 0;
+
+  let dia = {ingreso, gastos, neta, km, combustible, mant, renta, seguro, otros, fecha:new Date().toLocaleDateString()};
+  dias.push(dia);
+  localStorage.setItem('dias', JSON.stringify(dias));
+  render();
+
+function mostrarResumen(tipo, ingreso, gastos, neta, km){
+  let cont = document.getElementById('historial');
+
+  let resumenHTML = `
+    <div class="card">
+      <h3>Resumen ${tipo}</h3>
+      Ingreso: $${ingreso}<br>
+      Gastos: $${gastos}<br>
+      Ganancia: $${neta}<br>
+      KM recorridos: ${km}
+    </div>
+  `;
+
+  cont.insertAdjacentHTML('afterbegin', resumenHTML);
+}</h3>
+      Ingreso: $${ingreso}<br>
+      Gastos: $${gastos}<br>
+      Ganancia: $${neta}<br>
+      KM recorridos: ${km}
+    </div>
+  ` + cont.innerHTML;
+}
+}
+
+function render(){
+  let cont = document.getElementById('historial');
+  cont.innerHTML='';
+  dias.forEach(d=>{
+    cont.innerHTML += `<div class="card">
+      <b>${d.fecha}</b><br>
+      KM: ${d.km} | Ingreso: $${d.ingreso}<br>
+      Gastos: $${d.gastos} | Neta: $${d.neta}
+    </div>`;
+  });
+}
+
+function calcularSemana(){
+  let semana = dias.slice(-7);
+  let totalNeta = semana.reduce((a,b)=>a+b.neta,0);
+  let totalIngreso = semana.reduce((a,b)=>a+b.ingreso,0);
+  let totalGastos = semana.reduce((a,b)=>a+b.gastos,0);
+  let totalKm = semana.reduce((a,b)=>a+b.km,0);
+
+  mostrarResumen('Semanal', totalIngreso, totalGastos, totalNeta, totalKm);
+}
+
+function calcularMes(){
+  let totalNeta = dias.reduce((a,b)=>a+b.neta,0);
+  let totalIngreso = dias.reduce((a,b)=>a+b.ingreso,0);
+  let totalGastos = dias.reduce((a,b)=>a+b.gastos,0);
+  let totalKm = dias.reduce((a,b)=>a+b.km,0);
+
+  mostrarResumen('Mensual', totalIngreso, totalGastos, totalNeta, totalKm);
+}
+
+function borrarTodo(){
+  localStorage.clear();
+  dias=[];
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
