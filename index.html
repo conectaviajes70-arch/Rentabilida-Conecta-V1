@@ -153,12 +153,17 @@ let dias = JSON.parse(localStorage.getItem('dias')) || [];
 
 function calcular(){
   let ingreso = +document.getElementById('ingreso').value || 0;
-  let gastos = (+document.getElementById('combustible').value||0)+(+document.getElementById('mant').value||0)+(+document.getElementById('renta').value||0)+(+document.getElementById('seguro').value||0)+(+document.getElementById('otros').value||0);
+  let combustible = +document.getElementById('combustible').value || 0;
+  let mant = +document.getElementById('mant').value || 0;
+  let renta = +document.getElementById('renta').value || 0;
+  let seguro = +document.getElementById('seguro').value || 0;
+  let otros = +document.getElementById('otros').value || 0;
 
+  let gastos = combustible + mant + renta + seguro + otros;
   let neta = ingreso - gastos;
 
-  document.getElementById('bruta').innerText = "$"+ingreso;
-  document.getElementById('neta').innerText = "$"+neta;
+  document.getElementById('bruta').innerText = "$" + ingreso;
+  document.getElementById('neta').innerText = "$" + neta;
 }
 
 function limpiar(){
@@ -167,9 +172,6 @@ function limpiar(){
 
 function guardarDia(){
   let ingreso = +document.getElementById('ingreso').value || 0;
-  let gastos = (+document.getElementById('combustible').value||0)+(+document.getElementById('mant').value||0)+(+document.getElementById('renta').value||0)+(+document.getElementById('seguro').value||0)+(+document.getElementById('otros').value||0);
-  let neta = ingreso - gastos;
-
   let km = +document.getElementById('km').value || 0;
   let combustible = +document.getElementById('combustible').value || 0;
   let mant = +document.getElementById('mant').value || 0;
@@ -177,69 +179,76 @@ function guardarDia(){
   let seguro = +document.getElementById('seguro').value || 0;
   let otros = +document.getElementById('otros').value || 0;
 
-  let dia = {ingreso, gastos, neta, km, combustible, mant, renta, seguro, otros, fecha:new Date().toLocaleDateString()};
+  let gastos = combustible + mant + renta + seguro + otros;
+  let neta = ingreso - gastos;
+
+  let dia = {
+    ingreso, gastos, neta, km,
+    combustible, mant, renta, seguro, otros,
+    fecha: new Date().toLocaleDateString()
+  };
+
   dias.push(dia);
   localStorage.setItem('dias', JSON.stringify(dias));
   render();
-
-function mostrarResumen(tipo, ingreso, gastos, neta, km){
-  let cont = document.getElementById('historial');
-
-  let resumenHTML = `
-    <div class="card">
-      <h3>Resumen ${tipo}</h3>
-      Ingreso: $${ingreso}<br>
-      Gastos: $${gastos}<br>
-      Ganancia: $${neta}<br>
-      KM recorridos: ${km}
-    </div>
-  `;
-
-  cont.insertAdjacentHTML('afterbegin', resumenHTML);
-}</h3>
-      Ingreso: $${ingreso}<br>
-      Gastos: $${gastos}<br>
-      Ganancia: $${neta}<br>
-      KM recorridos: ${km}
-    </div>
-  ` + cont.innerHTML;
-}
 }
 
 function render(){
   let cont = document.getElementById('historial');
-  cont.innerHTML='';
+  cont.innerHTML = '';
+
   dias.forEach(d=>{
-    cont.innerHTML += `<div class="card">
-      <b>${d.fecha}</b><br>
-      KM: ${d.km} | Ingreso: $${d.ingreso}<br>
-      Gastos: $${d.gastos} | Neta: $${d.neta}
-    </div>`;
+    let card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = "<b>" + d.fecha + "</b><br>KM: " + d.km + " | Ingreso: $" + d.ingreso + "<br>Gastos: $" + d.gastos + " | Neta: $" + d.neta;
+    cont.appendChild(card);
   });
 }
 
 function calcularSemana(){
-  let semana = dias.slice(-7);
-  let totalNeta = semana.reduce((a,b)=>a+b.neta,0);
-  let totalIngreso = semana.reduce((a,b)=>a+b.ingreso,0);
-  let totalGastos = semana.reduce((a,b)=>a+b.gastos,0);
-  let totalKm = semana.reduce((a,b)=>a+b.km,0);
+  if(dias.length === 0) return;
 
-  mostrarResumen('Semanal', totalIngreso, totalGastos, totalNeta, totalKm);
+  let semana = dias.slice(-7);
+  let ingreso = 0, gastos = 0, neta = 0, km = 0;
+
+  semana.forEach(d=>{
+    ingreso += d.ingreso;
+    gastos += d.gastos;
+    neta += d.neta;
+    km += d.km;
+  });
+
+  mostrarResumen('Semanal', ingreso, gastos, neta, km);
 }
 
 function calcularMes(){
-  let totalNeta = dias.reduce((a,b)=>a+b.neta,0);
-  let totalIngreso = dias.reduce((a,b)=>a+b.ingreso,0);
-  let totalGastos = dias.reduce((a,b)=>a+b.gastos,0);
-  let totalKm = dias.reduce((a,b)=>a+b.km,0);
+  if(dias.length === 0) return;
 
-  mostrarResumen('Mensual', totalIngreso, totalGastos, totalNeta, totalKm);
+  let ingreso = 0, gastos = 0, neta = 0, km = 0;
+
+  dias.forEach(d=>{
+    ingreso += d.ingreso;
+    gastos += d.gastos;
+    neta += d.neta;
+    km += d.km;
+  });
+
+  mostrarResumen('Mensual', ingreso, gastos, neta, km);
+}
+
+function mostrarResumen(tipo, ingreso, gastos, neta, km){
+  let cont = document.getElementById('historial');
+
+  let card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = "<h3>Resumen " + tipo + "</h3>Ingreso: $" + ingreso + "<br>Gastos: $" + gastos + "<br>Ganancia: $" + neta + "<br>KM: " + km;
+
+  cont.prepend(card);
 }
 
 function borrarTodo(){
   localStorage.clear();
-  dias=[];
+  dias = [];
   render();
 }
 
